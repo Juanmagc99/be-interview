@@ -57,8 +57,7 @@ def create_location(create_location: CreateLocation,session: Session = Depends(g
 def get_organisation_locations(organisation_id: int, 
 session: Session = Depends(get_db), 
 bounding_box: Tuple[float, float, float, float] | None = Query(None, 
-description="min_long, max_long, min_lat, max_lat"),
-example=[-74.25909, -73.70018, 40.4774, 40.9176])->List[Location]:
+description="min_long, max_long, min_lat, max_lat"))->List[Location]:
     
     #Check organisation exists
     org = session.exec(select(Organisation).where(Organisation.id == organisation_id)).first()
@@ -80,3 +79,4 @@ example=[-74.25909, -73.70018, 40.4774, 40.9176])->List[Location]:
         res = session.exec(select(Location)
                            .filter(Location.organisation_id == organisation_id))
         return res.all()
+
