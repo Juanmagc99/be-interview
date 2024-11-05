@@ -62,3 +62,47 @@ def test_organisation_endpoints(test_client: TestClient) -> None:
     response = test_client.get("/api/organisations")
     organisations = set(organisation["name"] for organisation in response.json())
     assert  set(organisations) == created_organisation_names
+
+def test_location_endpoints(test_client: TestClient) -> None:
+    list_of_organisation_names_to_create = ["organisation_a", "organisation_b", "organisation_c"]
+
+    # Validate that organisations do not exist in database
+    with get_database_session() as database_session:
+        organisations_before = database_session.query(Organisation).all()
+        database_session.expunge_all()
+    assert len(organisations_before) == 0
+
+    # Create organisation
+    response = test_client.post("/api/organisations/create", json={"name": "org_aux"})
+    assert response.status_code == status.HTTP_200_OK
+
+    #Create locations
+    response = test_client.post("/api/organisations/create/locations", json={
+                                                            "organisation_id": 1,
+                                                            "location_name": "aux_1",
+                                                            "longitude": 10.5,
+                                                            "latitude": 9.8
+                                                            })
+    assert response.status_code == status.HTTP_200_OK
+
+    response = test_client.post("/api/organisations/create/locations", json={
+                                                            "organisation_id": 1,
+                                                            "location_name": "aux_2",
+                                                            "longitude": 2.5,
+                                                            "latitude": 2.8
+                                                            })
+    assert response.status_code == status.HTTP_200_OK
+
+    #Check all locations of org(id=1) are retrieved
+    response = test_client.get("/api/organisations/1/locations")
+    assert response.status_code == status.HTTP_200_OK
+    locations = response.json()
+    assert isinstance(locations, list)
+    assert len(locations) == 2
+
+     #Check all locations of org(id=1) withing box are retrieved
+    response = test_client.get("/api/organisations/1/locations?bounding_box=3.5&bounding_box=12.5&bounding_box=1.0&bounding_box=15.0")
+    assert response.status_code == status.HTTP_200_OK
+    locations = response.json()
+    assert isinstance(locations, list)
+    assert len(locations) == 1
